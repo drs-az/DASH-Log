@@ -157,13 +157,16 @@
       for(let d=1; d<=daysInMonth; d++){
         const cell = document.createElement('button');
         cell.className = 'day-cell p-2 text-left hover:bg-slate-50 relative';
-        cell.innerHTML = `<div class='text-xs text-slate-500'>${d}</div>`;
+        const dayNum = document.createElement('div');
+        dayNum.className = 'text-xs text-slate-500 absolute top-1 left-1';
+        dayNum.textContent = d;
+        cell.appendChild(dayNum);
 
         const key = toKey(new Date(year, month, d));
         const day = master.days[key];
         if(day){
           const badge = document.createElement('div');
-          badge.className = 'score-badge absolute bottom-2 right-2 text-sm font-semibold rounded-lg px-2 py-1 ' + (day.locked ? 'bg-emerald-600 text-white': 'bg-slate-800 text-white');
+          badge.className = 'score-badge absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-semibold rounded-lg px-2 py-1 ' + (day.locked ? 'bg-emerald-600 text-white': 'bg-slate-800 text-white');
           badge.textContent = day.aggregate_daily_dash_score ?? '—';
           badge.title = day.locked ? 'Locked' : 'Editable';
           cell.appendChild(badge);
@@ -184,15 +187,7 @@
       const c = document.getElementById('modalContent');
       c.innerHTML = '';
 
-      const section = (title, contentEl)=>{
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = `<h4 class='font-semibold mb-2'>${title}</h4>`;
-        wrapper.appendChild(contentEl);
-        return wrapper;
-      };
-
       // Meals
-      const meals = document.createElement('div');
       (day.meals||[]).forEach(m=>{
         const card = document.createElement('div');
         card.className = 'border rounded-lg p-3 mb-2';
@@ -204,7 +199,6 @@
       if((day.meals||[]).length){ c.appendChild(document.createElement('hr')); }
 
       // Drinks
-      const drinks = document.createElement('div');
       (day.drinks||[]).forEach(dk=>{
         const card = document.createElement('div');
         card.className = 'border rounded-lg p-3 mb-2';
@@ -212,11 +206,6 @@
         c.appendChild(card);
       });
 
-      // Raw JSON viewer (polished)
-      const pre = document.createElement('pre');
-      pre.className = 'bg-slate-900 text-slate-100 p-3 rounded-lg overflow-auto text-xs';
-      pre.textContent = JSON.stringify(day, null, 2);
-      c.appendChild(section('Raw JSON', pre));
 
       modal.showModal();
     }
