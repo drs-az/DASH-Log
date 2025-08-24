@@ -138,6 +138,7 @@
     let today = new Date();
     let currentMonth = today.getMonth();
     let currentYear = today.getFullYear();
+    let currentDayKey = '';
 
     function monthName(m){ return new Date(2000, m, 1).toLocaleString(undefined,{month:'long'}); }
 
@@ -213,6 +214,7 @@
     // ---------- Today Rendering ----------
     function renderToday(){
       const key = toKey(new Date());
+      currentDayKey = key;
       const master = loadMaster();
       const day = master.days[key];
       const card = document.getElementById('todayCard');
@@ -222,11 +224,13 @@
       if(!day){
         card.innerHTML = `<div class='text-slate-600'>No entries yet. Import a JSON for today.</div>`;
         btn.disabled = true;
+        btn.textContent = 'Conclude Day (Lock)';
         status.textContent = '';
         return;
       }
 
-      btn.disabled = !!day.locked;
+      btn.disabled = false;
+      btn.textContent = day.locked ? 'Unlock Day' : 'Conclude Day (Lock)';
       status.textContent = day.locked ? 'Locked' : 'Editable';
 
       const list = [];
@@ -269,10 +273,14 @@
 
     document.getElementById('btnConclude').onclick = ()=>{
       const master = loadMaster();
-      const key = toKey(new Date());
+      const key = currentDayKey;
       const day = master.days[key];
-      if(!day){ alert('No data for today to lock.'); return; }
-      day.locked = true;
+      if(!day){ alert('No data for today to toggle.'); return; }
+      if(day.locked && key !== toKey(new Date())){
+        alert('Cannot unlock past days.');
+        return;
+      }
+      day.locked = !day.locked;
       master.days[key] = day;
       saveMaster(master);
       renderCalendar(currentMonth, currentYear);
