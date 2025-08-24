@@ -1,0 +1,331 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DASH Log</title>
+  <!-- TailwindCSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{ --brand:#ef4444; --ink:#0f172a; }
+    .day-cell { min-height: 72px; }
+    .grid-cols-7 > div { border-right: 1px solid rgba(0,0,0,0.06); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .score-badge { font-variant-numeric: tabular-nums; }
+    dialog::backdrop { background: rgba(0,0,0,.5); }
+    .locked-badge { background: #16a34a; color: white; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <main class="max-w-4xl mx-auto p-4 sm:p-6">
+    <header class="mb-6">
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight">DASH Log</h1>
+      <p class="text-slate-500">Upload daily JSON files, view scores on a calendar, and export your master log.</p>
+    </header><!-- Tabs -->
+<div class="sticky top-0 z-10 bg-slate-50/80 backdrop-blur rounded-lg border mb-4">
+  <nav class="grid grid-cols-3 text-center">
+    <button id="tabCalendar" class="px-4 py-3 font-semibold border-b-2 border-transparent hover:bg-white rounded-t-lg">Calendar</button>
+    <button id="tabToday" class="px-4 py-3 font-semibold border-b-2 border-transparent hover:bg-white rounded-t-lg">Today</button>
+    <button id="tabSetting" class="px-4 py-3 font-semibold border-b-2 border-transparent hover:bg-white rounded-t-lg">Setting</button>
+  </nav>
+</div>
+
+<!-- Calendar View -->
+<section id="viewCalendar" class="space-y-4">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <button id="prevMonth" class="px-3 py-2 rounded-lg border bg-white hover:bg-slate-100" aria-label="Previous month">←</button>
+      <button id="nextMonth" class="px-3 py-2 rounded-lg border bg-white hover:bg-slate-100" aria-label="Next month">→</button>
+    </div>
+    <h2 id="monthLabel" class="text-xl font-semibold"></h2>
+    <div class="flex items-center gap-2">
+      <label class="px-3 py-2 rounded-lg border bg-white cursor-pointer hover:bg-slate-100">
+        <input id="fileInputCal" type="file" accept="application/json" class="hidden" />
+        Import JSON
+      </label>
+      <button id="jumpToday" class="px-3 py-2 rounded-lg border bg-white hover:bg-slate-100">Today</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-7 text-center text-xs font-semibold uppercase text-slate-500">
+    <div class="py-2">Sun</div>
+    <div class="py-2">Mon</div>
+    <div class="py-2">Tue</div>
+    <div class="py-2">Wed</div>
+    <div class="py-2">Thu</div>
+    <div class="py-2">Fri</div>
+    <div class="py-2">Sat</div>
+  </div>
+  <div id="calendarGrid" class="grid grid-cols-7 bg-white rounded-lg overflow-hidden border"></div>
+  <p class="text-sm text-slate-500">Tap a date with a score to view that day's details.</p>
+</section>
+
+<!-- Today View -->
+<section id="viewToday" class="hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <h2 class="text-xl font-semibold">Today</h2>
+    <label class="px-3 py-2 rounded-lg border bg-white cursor-pointer hover:bg-slate-100">
+      <input id="fileInputToday" type="file" accept="application/json" class="hidden" />
+      Import JSON
+    </label>
+  </div>
+  <div id="todayCard" class="bg-white rounded-xl border p-4 shadow-sm"></div>
+  <div class="flex items-center gap-3">
+    <button id="btnConclude" class="px-4 py-2 rounded-xl bg-slate-900 text-white disabled:opacity-50">Conclude Day (Lock)</button>
+    <span id="todayStatus" class="text-sm text-slate-600"></span>
+  </div>
+</section>
+
+<!-- Setting View -->
+<section id="viewSetting" class="hidden space-y-4">
+  <h2 class="text-xl font-semibold">Setting</h2>
+  <div class="bg-white border rounded-xl p-4 space-y-3">
+    <p class="text-slate-600">Export all stored days as a single master JSON file.</p>
+    <div class="flex items-center gap-3">
+      <button id="btnExport" class="px-4 py-2 rounded-xl bg-white border hover:bg-slate-100">Export Master JSON</button>
+      <button id="btnClear" class="px-4 py-2 rounded-xl bg-white border hover:bg-red-50">Clear All (Reset)</button>
+    </div>
+    <p class="text-xs text-slate-500">Data is saved locally in your browser (localStorage). Clearing will permanently remove it from this device.</p>
+  </div>
+</section>
+
+  </main>  <!-- Day Modal -->  <dialog id="dayModal" class="w-full max-w-xl rounded-xl p-0">
+    <form method="dialog">
+      <header class="flex items-center justify-between p-4 border-b bg-slate-50 rounded-t-xl">
+        <h3 id="modalTitle" class="text-lg font-semibold">Day Details</h3>
+        <button class="px-2 py-1 rounded-lg border bg-white">Close</button>
+      </header>
+      <div class="p-4 space-y-4" id="modalContent"></div>
+    </form>
+  </dialog>  <script>
+    // ---------- Storage Utilities ----------
+    const STORAGE_KEY = 'dash_master_v1';
+    function loadMaster(){
+      try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { days: {} }; }catch{ return { days: {} }; }
+    }
+    function saveMaster(data){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+    // Normalize date to YYYY-MM-DD
+    function toKey(d){ const tz = new Date(d); const y = tz.getFullYear(); const m = String(tz.getMonth()+1).padStart(2,'0'); const dd = String(tz.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
+
+    // Compute aggregate from a day object
+    function computeAggregate(day){
+      const scores = [];
+      (day.meals||[]).forEach(x=>{ if(typeof x.dash_score==='number') scores.push(x.dash_score); });
+      (day.drinks||[]).forEach(x=>{ if(typeof x.dash_score==='number') scores.push(x.dash_score); });
+      const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+      return avg!==null ? Number(avg.toFixed(2)) : null;
+    }
+
+    // Merge imported daily JSON into master, respecting locks
+    function importDailyJSON(json){
+      const master = loadMaster();
+      const dateKey = json.date || toKey(new Date());
+      const current = master.days[dateKey] || {};
+      if(current.locked){ alert(`Day ${dateKey} is locked. New imports are ignored.`); return; }
+      // Recompute aggregate
+      const aggregate = computeAggregate(json);
+      json.aggregate_daily_dash_score = aggregate;
+      json.locked = Boolean(json.locked); // default false
+      master.days[dateKey] = json;
+      saveMaster(master);
+      renderCalendar(currentMonth, currentYear);
+      renderToday();
+    }
+
+    // ---------- Calendar Rendering ----------
+    const calendarGrid = document.getElementById('calendarGrid');
+    const monthLabel = document.getElementById('monthLabel');
+
+    let today = new Date();
+    let currentMonth = today.getMonth();
+    let currentYear = today.getFullYear();
+
+    function monthName(m){ return new Date(2000, m, 1).toLocaleString(undefined,{month:'long'}); }
+
+    function renderCalendar(month, year){
+      monthLabel.textContent = `${monthName(month)} ${year}`;
+      calendarGrid.innerHTML = '';
+
+      const first = new Date(year, month, 1);
+      const startDay = first.getDay();
+      const daysInMonth = new Date(year, month+1, 0).getDate();
+
+      // Fill leading blanks
+      for(let i=0;i<startDay;i++) calendarGrid.appendChild(document.createElement('div'));
+
+      const master = loadMaster();
+
+      for(let d=1; d<=daysInMonth; d++){
+        const cell = document.createElement('button');
+        cell.className = 'day-cell p-2 text-left hover:bg-slate-50 relative';
+        cell.innerHTML = `<div class='text-xs text-slate-500'>${d}</div>`;
+
+        const key = toKey(new Date(year, month, d));
+        const day = master.days[key];
+        if(day){
+          const badge = document.createElement('div');
+          badge.className = 'score-badge absolute bottom-2 right-2 text-sm font-semibold rounded-lg px-2 py-1 ' + (day.locked ? 'bg-emerald-600 text-white': 'bg-slate-800 text-white');
+          badge.textContent = day.aggregate_daily_dash_score ?? '—';
+          badge.title = day.locked ? 'Locked' : 'Editable';
+          cell.appendChild(badge);
+        }
+
+        cell.addEventListener('click', ()=>{
+          if(!day) return;
+          openDayModal(key, day);
+        });
+
+        calendarGrid.appendChild(cell);
+      }
+    }
+
+    function openDayModal(key, day){
+      const modal = document.getElementById('dayModal');
+      document.getElementById('modalTitle').textContent = `${key}  ·  Score ${day.aggregate_daily_dash_score ?? '—'}${day.locked? ' · Locked':''}`;
+      const c = document.getElementById('modalContent');
+      c.innerHTML = '';
+
+      const section = (title, contentEl)=>{
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `<h4 class='font-semibold mb-2'>${title}</h4>`;
+        wrapper.appendChild(contentEl);
+        return wrapper;
+      };
+
+      // Meals
+      const meals = document.createElement('div');
+      (day.meals||[]).forEach(m=>{
+        const card = document.createElement('div');
+        card.className = 'border rounded-lg p-3 mb-2';
+        card.innerHTML = `<div class='flex justify-between'><div class='font-medium'>${m.time||'meal'}</div><div class='score-badge font-bold'>${m.dash_score?.toFixed? m.dash_score.toFixed(2): m.dash_score??''}</div></div>
+          <div class='text-sm text-slate-600'>${m.description||''}</div>`;
+        if(m.items){ card.innerHTML += `<div class='mt-1 text-xs text-slate-500'>${m.items.join(', ')}</div>`; }
+        c.appendChild(card);
+      });
+      if((day.meals||[]).length){ c.appendChild(document.createElement('hr')); }
+
+      // Drinks
+      const drinks = document.createElement('div');
+      (day.drinks||[]).forEach(dk=>{
+        const card = document.createElement('div');
+        card.className = 'border rounded-lg p-3 mb-2';
+        card.innerHTML = `<div class='flex justify-between'><div class='font-medium'>${dk.time||'drink'}: ${dk.item||''}</div><div class='score-badge font-bold'>${dk.dash_score?.toFixed? dk.dash_score.toFixed(2): dk.dash_score??''}</div></div>`;
+        c.appendChild(card);
+      });
+
+      // Raw JSON viewer (polished)
+      const pre = document.createElement('pre');
+      pre.className = 'bg-slate-900 text-slate-100 p-3 rounded-lg overflow-auto text-xs';
+      pre.textContent = JSON.stringify(day, null, 2);
+      c.appendChild(section('Raw JSON', pre));
+
+      modal.showModal();
+    }
+
+    // ---------- Today Rendering ----------
+    function renderToday(){
+      const key = toKey(new Date());
+      const master = loadMaster();
+      const day = master.days[key];
+      const card = document.getElementById('todayCard');
+      const status = document.getElementById('todayStatus');
+      const btn = document.getElementById('btnConclude');
+
+      if(!day){
+        card.innerHTML = `<div class='text-slate-600'>No entries yet. Import a JSON for today.</div>`;
+        btn.disabled = true;
+        status.textContent = '';
+        return;
+      }
+
+      btn.disabled = !!day.locked;
+      status.textContent = day.locked ? 'Locked' : 'Editable';
+
+      const list = [];
+      (day.meals||[]).forEach(m=> list.push(`<li><span class='font-medium'>${m.time||'meal'}</span> — ${m.description||''} <span class='ml-2 text-xs bg-slate-800 text-white px-2 py-0.5 rounded score-badge'>${m.dash_score}</span></li>`));
+      (day.drinks||[]).forEach(dk=> list.push(`<li><span class='font-medium'>${dk.time||'drink'}</span> — ${dk.item||''} <span class='ml-2 text-xs bg-slate-800 text-white px-2 py-0.5 rounded score-badge'>${dk.dash_score}</span></li>`));
+
+      card.innerHTML = `
+        <div class='flex items-center justify-between mb-2'>
+          <div>
+            <div class='text-sm text-slate-500'>${key}</div>
+            <div class='text-2xl font-bold'>Score: ${day.aggregate_daily_dash_score ?? '—'}</div>
+          </div>
+          ${day.locked ? '<span class="px-2 py-1 rounded locked-badge text-sm">Locked</span>' : ''}
+        </div>
+        <ul class='space-y-1'>${list.join('')}</ul>
+      `;
+    }
+
+    // ---------- Events ----------
+    document.getElementById('fileInputCal').addEventListener('change', handleFile);
+    document.getElementById('fileInputToday').addEventListener('change', handleFile);
+
+    function handleFile(ev){
+      const file = ev.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const json = JSON.parse(reader.result);
+          importDailyJSON(json);
+        }catch(e){ alert('Invalid JSON file.'); }
+        ev.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    document.getElementById('prevMonth').onclick = ()=>{ if(--currentMonth < 0){ currentMonth=11; currentYear--; } renderCalendar(currentMonth, currentYear); };
+    document.getElementById('nextMonth').onclick = ()=>{ if(++currentMonth > 11){ currentMonth=0; currentYear++; } renderCalendar(currentMonth, currentYear); };
+    document.getElementById('jumpToday').onclick = ()=>{ currentMonth = today.getMonth(); currentYear = today.getFullYear(); renderCalendar(currentMonth, currentYear); };
+
+    document.getElementById('btnConclude').onclick = ()=>{
+      const master = loadMaster();
+      const key = toKey(new Date());
+      const day = master.days[key];
+      if(!day){ alert('No data for today to lock.'); return; }
+      day.locked = true;
+      master.days[key] = day;
+      saveMaster(master);
+      renderCalendar(currentMonth, currentYear);
+      renderToday();
+    };
+
+    document.getElementById('btnExport').onclick = ()=>{
+      const master = loadMaster();
+      const blob = new Blob([JSON.stringify(master, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'dash_master.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    document.getElementById('btnClear').onclick = ()=>{
+      if(confirm('This will remove all data stored in this browser. Continue?')){
+        localStorage.removeItem(STORAGE_KEY);
+        renderCalendar(currentMonth, currentYear);
+        renderToday();
+      }
+    };
+
+    // Tabs
+    const tabs = {
+      tabCalendar: 'viewCalendar',
+      tabToday: 'viewToday',
+      tabSetting: 'viewSetting'
+    };
+    for(const [btnId, viewId] of Object.entries(tabs)){
+      document.getElementById(btnId).addEventListener('click', ()=>{
+        for(const vid of Object.values(tabs)) document.getElementById(vid).classList.add('hidden');
+        document.getElementById(viewId).classList.remove('hidden');
+        // UI hint for active tab
+        for(const b of Object.keys(tabs)) document.getElementById(b).classList.remove('border-slate-900');
+        document.getElementById(btnId).classList.add('border-slate-900');
+      });
+    }
+
+    // Initial render
+    renderCalendar(currentMonth, currentYear);
+    renderToday();
+  </script></body>
+</html>
