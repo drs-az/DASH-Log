@@ -207,6 +207,19 @@
         c.appendChild(card);
       });
 
+      if(day.reasons || day.improve){
+        if((day.meals||[]).length || (day.drinks||[]).length){ c.appendChild(document.createElement('hr')); }
+        if(day.reasons){
+          const div = document.createElement('div');
+          div.innerHTML = `<div class='font-medium mb-1'>Reasons</div><div class='text-sm text-slate-600 whitespace-pre-wrap'>${day.reasons}</div>`;
+          c.appendChild(div);
+        }
+        if(day.improve){
+          const div = document.createElement('div');
+          div.innerHTML = `<div class='font-medium mb-1'>Improve</div><div class='text-sm text-slate-600 whitespace-pre-wrap'>${day.improve}</div>`;
+          c.appendChild(div);
+        }
+      }
 
       modal.showModal();
     }
@@ -237,6 +250,14 @@
       (day.meals||[]).forEach(m=> list.push(`<li><span class='font-medium'>${m.time||'meal'}</span> — ${m.description||''} <span class='ml-2 text-xs bg-slate-800 text-white px-2 py-0.5 rounded score-badge'>${m.dash_score}</span></li>`));
       (day.drinks||[]).forEach(dk=> list.push(`<li><span class='font-medium'>${dk.time||'drink'}</span> — ${dk.item||''} <span class='ml-2 text-xs bg-slate-800 text-white px-2 py-0.5 rounded score-badge'>${dk.dash_score}</span></li>`));
 
+      const sections = [`<ul class='space-y-1'>${list.join('')}</ul>`];
+      if(day.reasons){
+        sections.push(`<div class='mt-3'><div class='font-medium'>Reasons</div><div class='text-sm text-slate-600 whitespace-pre-wrap'>${day.reasons}</div></div>`);
+      }
+      if(day.improve){
+        sections.push(`<div class='mt-3'><div class='font-medium'>Improve</div><div class='text-sm text-slate-600 whitespace-pre-wrap'>${day.improve}</div></div>`);
+      }
+
       card.innerHTML = `
         <div class='flex items-center justify-between mb-2'>
           <div>
@@ -245,7 +266,7 @@
           </div>
           ${day.locked ? '<span class="px-2 py-1 rounded locked-badge text-sm">Locked</span>' : ''}
         </div>
-        <ul class='space-y-1'>${list.join('')}</ul>
+        ${sections.join('')}
       `;
     }
 
