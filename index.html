@@ -138,13 +138,11 @@
     }
 
     function getNote(obj, names){
-
       const keys = Object.keys(obj||{});
       for(const n of names){
         const match = keys.find(k=>k.toLowerCase()===n.toLowerCase());
         if(match){
           const val = obj[match];
-
           return Array.isArray(val) ? val.join('\n') : val;
         }
       }
@@ -208,8 +206,9 @@
       const c = document.getElementById('modalContent');
       c.innerHTML = '';
 
-      const reasonsText = getNote(day, ['reasons','reason']);
-      const improveText = getNote(day, ['improve','improvement','improvements']);
+      const noteSrc = day.notes || day.note || day;
+      const reasonsText = getNote(noteSrc, ['reasons','reason']);
+      const improveText = getNote(noteSrc, ['improve','improvement','improvements']);
       let hasSection = false;
 
       // Meals
@@ -235,7 +234,6 @@
         hasSection = true;
       }
 
-
       // Activity
       const activities = day.activity || day.activities || [];
       if(activities.length){
@@ -257,7 +255,6 @@
       if(reasonsText || improveText){
         if(hasSection) c.appendChild(document.createElement('hr'));
 
-
         if(reasonsText){
           const block = document.createElement('div');
           block.className = 'mt-3';
@@ -267,7 +264,6 @@
           const text = document.createElement('div');
           text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
           text.textContent = reasonsText;
-
           block.appendChild(title);
           block.appendChild(text);
           c.appendChild(block);
@@ -286,7 +282,6 @@
           block.appendChild(title);
           block.appendChild(text);
           c.appendChild(block);
-
         }
       }
 
@@ -329,11 +324,11 @@
           </div>
           ${day.locked ? '<span class="px-2 py-1 rounded locked-badge text-sm">Locked</span>' : ''}
         </div>
-
         ${listHtml}
       `;
 
-      const reasonsTextDay = getNote(day, ['reasons','reason']);
+      const noteSrcDay = day.notes || day.note || day;
+      const reasonsTextDay = getNote(noteSrcDay, ['reasons','reason']);
       if(reasonsTextDay){
 
         const block = document.createElement('div');
@@ -343,15 +338,13 @@
         title.textContent = 'Reasons';
         const text = document.createElement('div');
         text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
-
         text.textContent = reasonsTextDay;
-
         block.appendChild(title);
         block.appendChild(text);
         card.appendChild(block);
       }
 
-      const improveTextDay = getNote(day, ['improve','improvement','improvements']);
+      const improveTextDay = getNote(noteSrcDay, ['improve','improvement','improvements']);
       if(improveTextDay){
 
         const block = document.createElement('div');
@@ -361,9 +354,7 @@
         title.textContent = 'Improve';
         const text = document.createElement('div');
         text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
-
         text.textContent = improveTextDay;
-
         block.appendChild(title);
         block.appendChild(text);
         card.appendChild(block);
