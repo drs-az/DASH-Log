@@ -77,18 +77,20 @@
 <!-- Setting View -->
 <section id="viewSetting" class="hidden space-y-4">
   <h2 class="text-xl font-semibold">Setting</h2>
-  <div class="bg-white border rounded-xl p-4 space-y-3">
-    <p class="text-slate-600">Export all stored days as a single master JSON file.</p>
-    <div class="flex items-center gap-3">
-      <label class="px-4 py-2 rounded-xl bg-white border hover:bg-slate-100 cursor-pointer">
-        <input id="fileInputMaster" type="file" accept="application/json" class="hidden" />
-        Import Master JSON
-      </label>
-      <button id="btnExport" class="px-4 py-2 rounded-xl bg-white border hover:bg-slate-100">Export Master JSON</button>
-      <button id="btnClear" class="px-4 py-2 rounded-xl bg-white border hover:bg-red-50">Clear All (Reset)</button>
+
+    <div class="bg-white border rounded-xl p-4 space-y-3">
+      <p class="text-slate-600">Export all stored days as a single master JSON file.</p>
+      <div class="flex items-center gap-3">
+        <label class="flex-1 px-4 py-2 rounded-xl bg-white border hover:bg-slate-100 cursor-pointer text-center">
+          <input id="fileInputMaster" type="file" accept="application/json" class="hidden" />
+          Import Master JSON
+        </label>
+        <button id="btnExport" class="flex-1 px-4 py-2 rounded-xl bg-white border hover:bg-slate-100 text-center">Export Master JSON</button>
+      </div>
+      <button id="btnClear" class="px-4 py-2 rounded-xl bg-white border hover:bg-red-50 w-full">Clear All (Reset)</button>
+      <p class="text-xs text-slate-500">Data is saved locally in your browser (localStorage). Clearing will permanently remove it from this device.</p>
+
     </div>
-    <p class="text-xs text-slate-500">Data is saved locally in your browser (localStorage). Clearing will permanently remove it from this device.</p>
-  </div>
 </section>
 
   </main>  <!-- Day Modal -->  <dialog id="dayModal" class="w-full max-w-xl rounded-xl p-0">
