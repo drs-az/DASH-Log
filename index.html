@@ -77,14 +77,20 @@
 <!-- Setting View -->
 <section id="viewSetting" class="hidden space-y-4">
   <h2 class="text-xl font-semibold">Setting</h2>
-  <div class="bg-white border rounded-xl p-4 space-y-3">
-    <p class="text-slate-600">Export all stored days as a single master JSON file.</p>
-    <div class="flex items-center gap-3">
-      <button id="btnExport" class="px-4 py-2 rounded-xl bg-white border hover:bg-slate-100">Export Master JSON</button>
-      <button id="btnClear" class="px-4 py-2 rounded-xl bg-white border hover:bg-red-50">Clear All (Reset)</button>
+
+    <div class="bg-white border rounded-xl p-4 space-y-3">
+      <p class="text-slate-600">Export all stored days as a single master JSON file.</p>
+      <div class="flex items-center gap-3">
+        <label class="flex-1 px-4 py-2 rounded-xl bg-white border hover:bg-slate-100 cursor-pointer text-center">
+          <input id="fileInputMaster" type="file" accept="application/json" class="hidden" />
+          Import Master JSON
+        </label>
+        <button id="btnExport" class="flex-1 px-4 py-2 rounded-xl bg-white border hover:bg-slate-100 text-center">Export Master JSON</button>
+      </div>
+      <button id="btnClear" class="px-4 py-2 rounded-xl bg-white border hover:bg-red-50 w-full">Clear All (Reset)</button>
+      <p class="text-xs text-slate-500">Data is saved locally in your browser (localStorage). Clearing will permanently remove it from this device.</p>
+
     </div>
-    <p class="text-xs text-slate-500">Data is saved locally in your browser (localStorage). Clearing will permanently remove it from this device.</p>
-  </div>
 </section>
 
   </main>  <!-- Day Modal -->  <dialog id="dayModal" class="w-full max-w-xl rounded-xl p-0">
@@ -264,6 +270,7 @@
         }
 
         if(improveText){
+
           const block = document.createElement('div');
           block.className = 'mt-3';
           const title = document.createElement('div');
@@ -323,6 +330,7 @@
       const noteSrcDay = day.notes || day.note || day;
       const reasonsTextDay = getNote(noteSrcDay, ['reasons','reason']);
       if(reasonsTextDay){
+
         const block = document.createElement('div');
         block.className = 'mt-3';
         const title = document.createElement('div');
@@ -338,6 +346,7 @@
 
       const improveTextDay = getNote(noteSrcDay, ['improve','improvement','improvements']);
       if(improveTextDay){
+
         const block = document.createElement('div');
         block.className = 'mt-3';
         const title = document.createElement('div');
@@ -355,6 +364,7 @@
     // ---------- Events ----------
     document.getElementById('fileInputCal').addEventListener('change', handleFile);
     document.getElementById('fileInputToday').addEventListener('change', handleFile);
+    document.getElementById('fileInputMaster').addEventListener('change', handleMasterImport);
 
     function handleFile(ev){
       const file = ev.target.files[0];
@@ -365,6 +375,25 @@
           const json = JSON.parse(reader.result);
           importDailyJSON(json);
         }catch(e){ alert('Invalid JSON file.'); }
+        ev.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function handleMasterImport(ev){
+      const file = ev.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const json = JSON.parse(reader.result);
+          if(!json || typeof json !== 'object' || typeof json.days !== 'object') throw new Error('bad');
+          if(confirm('Importing will overwrite existing data. Continue?')){
+            saveMaster(json);
+            renderCalendar(currentMonth, currentYear);
+            renderToday();
+          }
+        }catch(e){ alert('Invalid master JSON file.'); }
         ev.target.value = '';
       };
       reader.readAsText(file);
