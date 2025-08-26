@@ -80,6 +80,10 @@
   <div class="bg-white border rounded-xl p-4 space-y-3">
     <p class="text-slate-600">Export all stored days as a single master JSON file.</p>
     <div class="flex items-center gap-3">
+      <label class="px-4 py-2 rounded-xl bg-white border hover:bg-slate-100 cursor-pointer">
+        <input id="fileInputMaster" type="file" accept="application/json" class="hidden" />
+        Import Master JSON
+      </label>
       <button id="btnExport" class="px-4 py-2 rounded-xl bg-white border hover:bg-slate-100">Export Master JSON</button>
       <button id="btnClear" class="px-4 py-2 rounded-xl bg-white border hover:bg-red-50">Clear All (Reset)</button>
     </div>
@@ -238,6 +242,7 @@
           block.appendChild(title);
           block.appendChild(text);
           c.appendChild(block);
+
         }
       }
 
@@ -280,6 +285,7 @@
           </div>
           ${day.locked ? '<span class="px-2 py-1 rounded locked-badge text-sm">Locked</span>' : ''}
         </div>
+        
         ${listHtml}
       `;
 
@@ -315,6 +321,7 @@
     // ---------- Events ----------
     document.getElementById('fileInputCal').addEventListener('change', handleFile);
     document.getElementById('fileInputToday').addEventListener('change', handleFile);
+    document.getElementById('fileInputMaster').addEventListener('change', handleMasterImport);
 
     function handleFile(ev){
       const file = ev.target.files[0];
@@ -325,6 +332,25 @@
           const json = JSON.parse(reader.result);
           importDailyJSON(json);
         }catch(e){ alert('Invalid JSON file.'); }
+        ev.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function handleMasterImport(ev){
+      const file = ev.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const json = JSON.parse(reader.result);
+          if(!json || typeof json !== 'object' || typeof json.days !== 'object') throw new Error('bad');
+          if(confirm('Importing will overwrite existing data. Continue?')){
+            saveMaster(json);
+            renderCalendar(currentMonth, currentYear);
+            renderToday();
+          }
+        }catch(e){ alert('Invalid master JSON file.'); }
         ev.target.value = '';
       };
       reader.readAsText(file);
