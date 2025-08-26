@@ -138,9 +138,13 @@
     }
 
     function getNote(obj, names){
+
+      const keys = Object.keys(obj||{});
       for(const n of names){
-        if(obj[n]){
-          const val = obj[n];
+        const match = keys.find(k=>k.toLowerCase()===n.toLowerCase());
+        if(match){
+          const val = obj[match];
+
           return Array.isArray(val) ? val.join('\n') : val;
         }
       }
@@ -204,6 +208,10 @@
       const c = document.getElementById('modalContent');
       c.innerHTML = '';
 
+      const reasonsText = getNote(day, ['reasons','reason']);
+      const improveText = getNote(day, ['improve','improvement','improvements']);
+      let hasSection = false;
+
       // Meals
       (day.meals||[]).forEach(m=>{
         const card = document.createElement('div');
@@ -213,23 +221,42 @@
         if(m.items){ card.innerHTML += `<div class='mt-1 text-xs text-slate-500'>${m.items.join(', ')}</div>`; }
         c.appendChild(card);
       });
-      if((day.meals||[]).length){ c.appendChild(document.createElement('hr')); }
+      if((day.meals||[]).length){ hasSection = true; }
 
       // Drinks
-      (day.drinks||[]).forEach(dk=>{
-        const card = document.createElement('div');
-        card.className = 'border rounded-lg p-3 mb-2';
-        card.innerHTML = `<div class='flex justify-between'><div class='font-medium'>${dk.time||'drink'}: ${dk.item||''}</div><div class='score-badge font-bold'>${dk.dash_score?.toFixed? dk.dash_score.toFixed(2): dk.dash_score??''}</div></div>`;
-        c.appendChild(card);
-      });
+      if((day.drinks||[]).length){
+        if(hasSection) c.appendChild(document.createElement('hr'));
+        (day.drinks||[]).forEach(dk=>{
+          const card = document.createElement('div');
+          card.className = 'border rounded-lg p-3 mb-2';
+          card.innerHTML = `<div class='flex justify-between'><div class='font-medium'>${dk.time||'drink'}: ${dk.item||''}</div><div class='score-badge font-bold'>${dk.dash_score?.toFixed? dk.dash_score.toFixed(2): dk.dash_score??''}</div></div>`;
+          c.appendChild(card);
+        });
+        hasSection = true;
+      }
 
-      const reasonsText = getNote(day, ['reasons','reason']);
-      const improveText = getNote(day, ['improve','improvement','improvements']);
+
+      // Activity
+      const activities = day.activity || day.activities || [];
+      if(activities.length){
+        if(hasSection) c.appendChild(document.createElement('hr'));
+        activities.forEach(a=>{
+          const card = document.createElement('div');
+          card.className = 'border rounded-lg p-3 mb-2';
+          const details = [];
+          if(a.distance_miles!=null) details.push(`${a.distance_miles} mi`);
+          if(a.duration_min!=null) details.push(`${a.duration_min} min`);
+          card.innerHTML = `<div class='flex justify-between'><div class='font-medium'>${a.time||'activity'}</div><div class='score-badge font-bold'>${a.points??''}</div></div>
+            <div class='text-sm text-slate-600'>${a.description||''}</div>`;
+          if(details.length){ card.innerHTML += `<div class='mt-1 text-xs text-slate-500'>${details.join(' · ')}</div>`; }
+          c.appendChild(card);
+        });
+        hasSection = true;
+      }
+
       if(reasonsText || improveText){
+        if(hasSection) c.appendChild(document.createElement('hr'));
 
-        if((day.meals||[]).length || (day.drinks||[]).length){
-          c.appendChild(document.createElement('hr'));
-        }
 
         if(reasonsText){
           const block = document.createElement('div');
