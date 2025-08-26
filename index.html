@@ -135,6 +135,16 @@
       renderToday();
     }
 
+    function getNote(obj, names){
+      for(const n of names){
+        if(obj[n]){
+          const val = obj[n];
+          return Array.isArray(val) ? val.join('\n') : val;
+        }
+      }
+      return '';
+    }
+
     // ---------- Calendar Rendering ----------
     const calendarGrid = document.getElementById('calendarGrid');
     const monthLabel = document.getElementById('monthLabel');
@@ -211,12 +221,15 @@
         c.appendChild(card);
       });
 
-      if(day.reasons || day.improve){
+      const reasonsText = getNote(day, ['reasons','reason']);
+      const improveText = getNote(day, ['improve','improvement','improvements']);
+      if(reasonsText || improveText){
+
         if((day.meals||[]).length || (day.drinks||[]).length){
           c.appendChild(document.createElement('hr'));
         }
 
-        if(day.reasons){
+        if(reasonsText){
           const block = document.createElement('div');
           block.className = 'mt-3';
           const title = document.createElement('div');
@@ -224,13 +237,15 @@
           title.textContent = 'Reasons';
           const text = document.createElement('div');
           text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
-          text.textContent = day.reasons;
+          text.textContent = reasonsText;
+
           block.appendChild(title);
           block.appendChild(text);
           c.appendChild(block);
         }
 
-        if(day.improve){
+        if(improveText){
+
           const block = document.createElement('div');
           block.className = 'mt-3';
           const title = document.createElement('div');
@@ -238,7 +253,7 @@
           title.textContent = 'Improve';
           const text = document.createElement('div');
           text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
-          text.textContent = day.improve;
+          text.textContent = improveText;
           block.appendChild(title);
           block.appendChild(text);
           c.appendChild(block);
@@ -285,11 +300,13 @@
           </div>
           ${day.locked ? '<span class="px-2 py-1 rounded locked-badge text-sm">Locked</span>' : ''}
         </div>
-        
+
         ${listHtml}
       `;
 
-      if(day.reasons){
+      const reasonsTextDay = getNote(day, ['reasons','reason']);
+      if(reasonsTextDay){
+
         const block = document.createElement('div');
         block.className = 'mt-3';
         const title = document.createElement('div');
@@ -297,13 +314,17 @@
         title.textContent = 'Reasons';
         const text = document.createElement('div');
         text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
-        text.textContent = day.reasons;
+
+        text.textContent = reasonsTextDay;
+
         block.appendChild(title);
         block.appendChild(text);
         card.appendChild(block);
       }
 
-      if(day.improve){
+      const improveTextDay = getNote(day, ['improve','improvement','improvements']);
+      if(improveTextDay){
+
         const block = document.createElement('div');
         block.className = 'mt-3';
         const title = document.createElement('div');
@@ -311,7 +332,9 @@
         title.textContent = 'Improve';
         const text = document.createElement('div');
         text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
-        text.textContent = day.improve;
+
+        text.textContent = improveTextDay;
+
         block.appendChild(title);
         block.appendChild(text);
         card.appendChild(block);
