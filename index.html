@@ -210,10 +210,12 @@
         getNote(day.notes, ['reasons','reason']) ||
         getNote(day.note, ['reasons','reason']) ||
         getNote(day, ['reasons','reason']);
+
       const improveText =
         getNote(day.notes, ['improve','improvement','improvements']) ||
         getNote(day.note, ['improve','improvement','improvements']) ||
         getNote(day, ['improve','improvement','improvements']);
+
       let hasSection = false;
 
       // Meals
@@ -257,10 +259,10 @@
         hasSection = true;
       }
 
-      if(reasonsText.trim() || improveText.trim()){
+      if(reasonsText || improveText){
         if(hasSection) c.appendChild(document.createElement('hr'));
 
-        if(reasonsText.trim()){
+        if(reasonsText){
           const block = document.createElement('div');
           block.className = 'mt-3';
           const title = document.createElement('div');
@@ -274,7 +276,7 @@
           c.appendChild(block);
         }
 
-        if(improveText.trim()){
+        if(improveText){
 
           const block = document.createElement('div');
           block.className = 'mt-3';
@@ -336,7 +338,8 @@
         getNote(day.notes, ['reasons','reason']) ||
         getNote(day.note, ['reasons','reason']) ||
         getNote(day, ['reasons','reason']);
-      if(reasonsTextDay.trim()){
+
+      if(reasonsTextDay){
 
         const block = document.createElement('div');
         block.className = 'mt-3';
@@ -355,7 +358,8 @@
         getNote(day.notes, ['improve','improvement','improvements']) ||
         getNote(day.note, ['improve','improvement','improvements']) ||
         getNote(day, ['improve','improvement','improvements']);
-      if(improveTextDay.trim()){
+
+      if(improveTextDay){
 
         const block = document.createElement('div');
         block.className = 'mt-3';
