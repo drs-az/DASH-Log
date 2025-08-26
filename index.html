@@ -212,16 +212,37 @@
       });
 
       if(day.reasons || day.improve){
-        if((day.meals||[]).length || (day.drinks||[]).length){ c.appendChild(document.createElement('hr')); }
-        if(day.reasons){
-          const div = document.createElement('div');
-          div.innerHTML = `<div class='font-medium mb-1'>Reasons</div><div class='text-sm text-slate-600 whitespace-pre-wrap'>${day.reasons}</div>`;
-          c.appendChild(div);
+        if((day.meals||[]).length || (day.drinks||[]).length){
+          c.appendChild(document.createElement('hr'));
         }
+
+        if(day.reasons){
+          const block = document.createElement('div');
+          block.className = 'mt-3';
+          const title = document.createElement('div');
+          title.className = 'font-medium mb-1';
+          title.textContent = 'Reasons';
+          const text = document.createElement('div');
+          text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
+          text.textContent = day.reasons;
+          block.appendChild(title);
+          block.appendChild(text);
+          c.appendChild(block);
+        }
+
         if(day.improve){
-          const div = document.createElement('div');
-          div.innerHTML = `<div class='font-medium mb-1'>Improve</div><div class='text-sm text-slate-600 whitespace-pre-wrap'>${day.improve}</div>`;
-          c.appendChild(div);
+          const block = document.createElement('div');
+          block.className = 'mt-3';
+          const title = document.createElement('div');
+          title.className = 'font-medium mb-1';
+          title.textContent = 'Improve';
+          const text = document.createElement('div');
+          text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
+          text.textContent = day.improve;
+          block.appendChild(title);
+          block.appendChild(text);
+          c.appendChild(block);
+
         }
       }
 
@@ -254,13 +275,7 @@
       (day.meals||[]).forEach(m=> list.push(`<li><span class='font-medium'>${m.time||'meal'}</span> — ${m.description||''} <span class='ml-2 text-xs bg-slate-800 text-white px-2 py-0.5 rounded score-badge'>${m.dash_score}</span></li>`));
       (day.drinks||[]).forEach(dk=> list.push(`<li><span class='font-medium'>${dk.time||'drink'}</span> — ${dk.item||''} <span class='ml-2 text-xs bg-slate-800 text-white px-2 py-0.5 rounded score-badge'>${dk.dash_score}</span></li>`));
 
-      const sections = [`<ul class='space-y-1'>${list.join('')}</ul>`];
-      if(day.reasons){
-        sections.push(`<div class='mt-3'><div class='font-medium'>Reasons</div><div class='text-sm text-slate-600 whitespace-pre-wrap'>${day.reasons}</div></div>`);
-      }
-      if(day.improve){
-        sections.push(`<div class='mt-3'><div class='font-medium'>Improve</div><div class='text-sm text-slate-600 whitespace-pre-wrap'>${day.improve}</div></div>`);
-      }
+      const listHtml = `<ul class='space-y-1'>${list.join('')}</ul>`;
 
       card.innerHTML = `
         <div class='flex items-center justify-between mb-2'>
@@ -270,8 +285,37 @@
           </div>
           ${day.locked ? '<span class="px-2 py-1 rounded locked-badge text-sm">Locked</span>' : ''}
         </div>
-        ${sections.join('')}
+        
+        ${listHtml}
       `;
+
+      if(day.reasons){
+        const block = document.createElement('div');
+        block.className = 'mt-3';
+        const title = document.createElement('div');
+        title.className = 'font-medium';
+        title.textContent = 'Reasons';
+        const text = document.createElement('div');
+        text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
+        text.textContent = day.reasons;
+        block.appendChild(title);
+        block.appendChild(text);
+        card.appendChild(block);
+      }
+
+      if(day.improve){
+        const block = document.createElement('div');
+        block.className = 'mt-3';
+        const title = document.createElement('div');
+        title.className = 'font-medium';
+        title.textContent = 'Improve';
+        const text = document.createElement('div');
+        text.className = 'text-sm text-slate-600 whitespace-pre-wrap';
+        text.textContent = day.improve;
+        block.appendChild(title);
+        block.appendChild(text);
+        card.appendChild(block);
+      }
     }
 
     // ---------- Events ----------
