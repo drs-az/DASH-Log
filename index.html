@@ -206,9 +206,14 @@
       const c = document.getElementById('modalContent');
       c.innerHTML = '';
 
-      const noteSrc = day.notes || day.note || day;
-      const reasonsText = getNote(noteSrc, ['reasons','reason']);
-      const improveText = getNote(noteSrc, ['improve','improvement','improvements']);
+      const reasonsText =
+        getNote(day.notes, ['reasons','reason']) ||
+        getNote(day.note, ['reasons','reason']) ||
+        getNote(day, ['reasons','reason']);
+      const improveText =
+        getNote(day.notes, ['improve','improvement','improvements']) ||
+        getNote(day.note, ['improve','improvement','improvements']) ||
+        getNote(day, ['improve','improvement','improvements']);
       let hasSection = false;
 
       // Meals
@@ -252,10 +257,10 @@
         hasSection = true;
       }
 
-      if(reasonsText || improveText){
+      if(reasonsText.trim() || improveText.trim()){
         if(hasSection) c.appendChild(document.createElement('hr'));
 
-        if(reasonsText){
+        if(reasonsText.trim()){
           const block = document.createElement('div');
           block.className = 'mt-3';
           const title = document.createElement('div');
@@ -269,7 +274,7 @@
           c.appendChild(block);
         }
 
-        if(improveText){
+        if(improveText.trim()){
 
           const block = document.createElement('div');
           block.className = 'mt-3';
@@ -327,9 +332,11 @@
         ${listHtml}
       `;
 
-      const noteSrcDay = day.notes || day.note || day;
-      const reasonsTextDay = getNote(noteSrcDay, ['reasons','reason']);
-      if(reasonsTextDay){
+      const reasonsTextDay =
+        getNote(day.notes, ['reasons','reason']) ||
+        getNote(day.note, ['reasons','reason']) ||
+        getNote(day, ['reasons','reason']);
+      if(reasonsTextDay.trim()){
 
         const block = document.createElement('div');
         block.className = 'mt-3';
@@ -344,8 +351,11 @@
         card.appendChild(block);
       }
 
-      const improveTextDay = getNote(noteSrcDay, ['improve','improvement','improvements']);
-      if(improveTextDay){
+      const improveTextDay =
+        getNote(day.notes, ['improve','improvement','improvements']) ||
+        getNote(day.note, ['improve','improvement','improvements']) ||
+        getNote(day, ['improve','improvement','improvements']);
+      if(improveTextDay.trim()){
 
         const block = document.createElement('div');
         block.className = 'mt-3';
